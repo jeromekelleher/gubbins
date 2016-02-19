@@ -1,17 +1,17 @@
 /*
  *  Wellcome Trust Sanger Institute
  *  Copyright (C) 2011  Wellcome Trust Sanger Institute
- *  
+ *
  *  This program is free software; you can redistribute it and/or
  *  modify it under the terms of the GNU General Public License
  *  as published by the Free Software Foundation; either version 2
  *  of the License, or (at your option) any later version.
- *  
+ *
  *  This program is distributed in the hope that it will be useful,
  *  but WITHOUT ANY WARRANTY; without even the implied warranty of
  *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  *  GNU General Public License for more details.
- *  
+ *
  *  You should have received a copy of the GNU General Public License
  *  along with this program; if not, write to the Free Software
  *  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
@@ -35,7 +35,7 @@ void build_snp_locations(int snp_locations[], char reference_sequence[])
 {
 	int i;
 	int snp_counter = 0;
-	
+
 	for(i = 0; reference_sequence[i]; i++)
     {
 		if(reference_sequence[i] == '*')
@@ -55,19 +55,19 @@ int generate_snp_sites(char filename[],  int exclude_gaps, char suffix[])
 	int * snp_locations;
 	int number_of_samples;
 	int i;
-	
+
 	length_of_genome = genome_length(filename);
 	reference_sequence = (char *) calloc((length_of_genome+1),sizeof(char));
-	
+
 	build_reference_sequence(reference_sequence,filename);
 	number_of_snps = detect_snps(reference_sequence, filename, length_of_genome, exclude_gaps);
-	
+
 	snp_locations = (int *) calloc((number_of_snps+1),sizeof(int));
 	build_snp_locations(snp_locations, reference_sequence);
 	free(reference_sequence);
-	
+
 	number_of_samples = number_of_sequences_in_file(filename);
-	
+
 	// Find out the names of the sequences
 	char* sequence_names[number_of_samples];
 	sequence_names[number_of_samples-1] = '\0';
@@ -75,30 +75,30 @@ int generate_snp_sites(char filename[],  int exclude_gaps, char suffix[])
 	{
 		sequence_names[i] = calloc(MAX_SAMPLE_NAME_SIZE,sizeof(char));
 	}
-	
+
 	get_sample_names_for_header(filename, sequence_names, number_of_samples);
-	
+
 	int internal_nodes[number_of_samples];
 	int a = 0;
 	for(a =0; a < number_of_samples; a++)
 	{
 		internal_nodes[a] = 0;
 	}
-	
-	char* bases_for_snps[number_of_snps];
-	
+
+    char **bases_for_snps = malloc(number_of_snps * sizeof(char *));
+
 	for(i = 0; i < number_of_snps; i++)
 	{
 		bases_for_snps[i] = calloc((number_of_samples+1),sizeof(char));
 	}
-	
+
 	get_bases_for_each_snp(filename, snp_locations, bases_for_snps, length_of_genome, number_of_snps);
-	
+
   char filename_without_directory[MAX_FILENAME_SIZE];
   strip_directory_from_filename(filename, filename_without_directory);
-	
+
 	concat_strings_created_with_malloc(filename_without_directory,suffix);
-	
+
 	create_vcf_file(filename_without_directory, snp_locations, number_of_snps, bases_for_snps, sequence_names, number_of_samples,internal_nodes,1,length_of_genome);
 	create_phylip_of_snp_sites(filename_without_directory, number_of_snps, bases_for_snps, sequence_names, number_of_samples,internal_nodes);
 	create_fasta_of_snp_sites(filename_without_directory, number_of_snps, bases_for_snps, sequence_names, number_of_samples,internal_nodes);
@@ -119,14 +119,14 @@ void strip_directory_from_filename(char * input_filename, char * output_filename
     {
       last_forward_slash_index = i;
     }
-    
+
     if(input_filename[i] == '\0' || input_filename[i] == '\n')
     {
       end_index = i;
       break;
     }
   }
-  
+
   int current_index = 0;
   for(i = last_forward_slash_index+1; i< end_index; i++)
   {
@@ -148,11 +148,11 @@ int refilter_existing_snps(char * reference_bases, int number_of_snps, int * snp
 		{
 			snp_locations[i] = -1;
 			reference_bases[i] = '*';
-			
+
 			number_of_filtered_snps--;
 		}
 	}
-	
+
 	remove_filtered_snp_locations(filtered_snp_locations, snp_locations, number_of_snps);
 	return number_of_filtered_snps;
 }
